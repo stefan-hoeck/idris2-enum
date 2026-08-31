@@ -1,0 +1,13 @@
+package enum
+version    = 0.0.1
+authors    = "Stefan Höck"
+depends    = base    >= 0.6.0
+           , elab-util
+           , finite
+           , refined
+
+brief      = "Verified enumeration types"
+
+modules    = Data.Enum
+
+sourcedir  = "src"
