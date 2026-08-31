@@ -1,0 +1,4 @@
+[custom.all.enum]
+type   = "local"
+path   = "."
+ipkg   = "enum.ipkg"
