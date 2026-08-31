@@ -44,6 +44,14 @@ export %inline
 toFin : Index n -> Fin (cast n)
 toFin (I v) = bits32ToFin v n
 
+export %inline
+Cast (Index n) Integer where
+  cast (I v) = cast v
+
+export %inline
+Cast (Index n) Bits32 where
+  cast (I v) = v
+
 --------------------------------------------------------------------------------
 -- Enum Interface
 --------------------------------------------------------------------------------
@@ -70,6 +78,14 @@ interface Finite t => Enum (0 t : Type) (0 n : Bits32) | t where
 export %inline
 enumToFin : Enum t n => t -> Fin (cast n)
 enumToFin = toFin . toIndex
+
+export %inline
+enumToBits32 : Enum t n => t -> Bits32
+enumToBits32 = cast . toIndex
+
+export %inline
+enumToInteger : Enum t n => t -> Integer
+enumToInteger = cast . toIndex
 
 export
 Enum Bool 2 where
