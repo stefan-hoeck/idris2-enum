@@ -2,3 +2,6 @@
 type   = "local"
 path   = "."
 ipkg   = "enum.ipkg"
+
+[custom.all]
+algebra.commit = "latest:main"

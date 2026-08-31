@@ -10,7 +10,7 @@ import public Decidable.HDecEq
 %language ElabReflection
 
 --------------------------------------------------------------------------------
--- Primitive Indices 
+-- Primitive Indices
 --------------------------------------------------------------------------------
 
 public export
@@ -40,9 +40,9 @@ export
 0 ltProof : (v : Bits32) -> (0 prf : v < n) => lt (cast v) (cast n) === True
 ltProof v = believe_me $ Builtin.Refl {x = True}
 
-export
+export %inline
 toFin : Index n -> Fin (cast n)
-toFin (I v) = natToFinLT (cast v) @{ltReflectsLT _ _ ?foobar}
+toFin (I v) = bits32ToFin v n
 
 --------------------------------------------------------------------------------
 -- Enum Interface
@@ -63,9 +63,13 @@ interface Finite t => Enum (0 t : Type) (0 n : Bits32) | t where
   constructor MkEnum
   toIndex : t -> Index n
 
-  0 toIndexInjective : (x,y : t) -> toIndex x === toIndex y -> x === y 
+  0 toIndexInjective : (x,y : t) -> toIndex x === toIndex y -> x === y
 
   0 valuesComplete : (x : t) -> Elem x Finite.values
+
+export %inline
+enumToFin : Enum t n => t -> Fin (cast n)
+enumToFin = toFin . toIndex
 
 export
 Enum Bool 2 where
