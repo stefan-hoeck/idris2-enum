@@ -18,6 +18,10 @@ export
 conIndexInjectiveName : Named a => a -> Name
 conIndexInjectiveName v = funName v "conIndexInjective"
 
+export
+valuesCompleteName : Named a => a -> Name
+valuesCompleteName v = funName v "valuesComplete"
+
 ||| Top-level function declaration of a proof that all constructor indexes
 ||| are less than the total number of constructors.
 export
@@ -41,6 +45,15 @@ conIndexInjectiveClaim vis cifun fun p =
       tpe := piAll `(x === y) (p.implicits ++ [a1,a2,prf])
    in claim M0 vis [] fun tpe
 
+||| Top-level function declaration of a proof that every value is
+||| indeed included in `Data.Finite.values`.
+export
+valuesCompleteClaim : Visibility -> (fun : Name) -> (p : TypeInfo) -> Decl
+valuesCompleteClaim vis fun p =
+  let arg := MkArg MW ExplicitArg (Just "v") p.applied
+      tpe := piAll `(Data.List.Elem.Elem v Data.Finite.values) (p.implicits ++ [arg])
+   in claim M0 vis [] fun tpe
+
 --------------------------------------------------------------------------------
 --          Definitions
 --------------------------------------------------------------------------------
@@ -58,6 +71,16 @@ conIndexInjectiveDef f p = def f $ map cclause p.cons
   where
     cclause : Con p.arty p.args -> Clause
     cclause c = patClause (appAll f [bindAny c, bindAny c, `(Refl)]) `(Refl)
+
+export
+valuesCompleteDef : (fun : Name) -> TypeInfo -> Decl
+valuesCompleteDef f p = def f (clauses [<] `(Here) p.cons)
+  where
+    clauses : SnocList Clause -> TTImp -> List (Con p.arty p.args) -> List Clause
+    clauses sc prf []        = sc <>> []
+    clauses sc prf (x :: xs) =
+     let c := patClause (var f `app` bindAny x) prf
+      in clauses (sc:<c) `(There ~(prf)) xs
 
 --------------------------------------------------------------------------------
 --          Deriving
@@ -93,3 +116,18 @@ ConIndexInjectiveVis vis nms p =
 export %inline
 ConIndexInjective : List Name -> ParamTypeInfo -> Res (List TopLevel)
 ConIndexInjective = ConIndexInjectiveVis Export
+
+||| Generates a proof that the `Data.Finite.values` indeed contains every
+||| possible value. This currently only works for enum types.
+export
+ValuesCompleteVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
+ValuesCompleteVis vis nms p =
+  let fun := valuesCompleteName p
+   in Right
+        [ TL (valuesCompleteClaim vis fun p.info) (valuesCompleteDef fun p.info)
+        ]
+
+||| Alias for `ValuesCompleteVis Export`
+export %inline
+ValuesComplete : List Name -> ParamTypeInfo -> Res (List TopLevel)
+ValuesComplete = ValuesCompleteVis Export

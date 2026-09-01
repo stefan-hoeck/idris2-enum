@@ -1,6 +1,7 @@
 module Main
 
 import Derive.Enum
+import Large
 
 %default total
 %language ElabReflection
@@ -15,7 +16,7 @@ data MyEnum : Type where
   M7 : MyEnum
   M8 : MyEnum
 
-%runElab derive "MyEnum" [Show,Eq,Ord,Finite,ConIndexLt,ConIndexInjective]
+%runElab derive "MyEnum" [Show,Eq,Ord,Finite,ConIndexLt,ConIndexInjective,ValuesComplete]
 
 toIndex : MyEnum -> Index 8
 toIndex x = I (cast $ conIndexMyEnum x) @{conIndexLtMyEnum x}
