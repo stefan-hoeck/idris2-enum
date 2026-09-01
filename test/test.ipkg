@@ -1,0 +1,14 @@
+package enum-test
+
+authors    = "stefan-hoeck"
+version    = 0.1.0
+readme     = "README.md"
+license    = "BSD-3 Clause"
+
+main       = Main
+executable = "enum-test"
+
+sourcedir  = "src"
+
+depends    = hedgehog
+           , enum

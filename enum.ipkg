@@ -9,5 +9,6 @@ depends    = base    >= 0.6.0
 brief      = "Verified enumeration types"
 
 modules    = Data.Enum
+           , Derive.Enum
 
 sourcedir  = "src"

@@ -33,3 +33,5 @@ jobs:
           apt-get install --yes nodejs
       - name: Build lib
         run: pack install enum
+      - name: Test lib
+        run: pack test enum
