@@ -15,6 +15,10 @@ conIndexLtName : Named a => a -> Name
 conIndexLtName v = funName v "conIndexLt"
 
 export
+toIndexName : Named a => a -> Name
+toIndexName v = funName v "toIndex"
+
+export
 conIndexInjectiveName : Named a => a -> Name
 conIndexInjectiveName v = funName v "conIndexInjective"
 
@@ -54,6 +58,17 @@ valuesCompleteClaim vis fun p =
       tpe := piAll `(Data.List.Elem.Elem v Data.Finite.values) (p.implicits ++ [arg])
    in claim M0 vis [] fun tpe
 
+||| Top-level function declaration for a conversion of a data constructor
+||| to a value of type `Index n`, where `n` is the number of data constructors
+||| of the type.
+export
+toIndexClaim : Visibility -> (fun : Name) -> (p : TypeInfo) -> Decl
+toIndexClaim vis fun p =
+  let tot := primVal (B32 $ cast $ length p.cons)
+      arg := MkArg MW ExplicitArg (Just "v") p.applied
+      tpe := piAll `(Index ~(tot)) (p.implicits ++ [arg])
+   in simpleClaim vis fun tpe
+
 --------------------------------------------------------------------------------
 --          Definitions
 --------------------------------------------------------------------------------
@@ -64,6 +79,12 @@ conIndexLtDef f p = def f $ map cclause p.cons
   where
     cclause : Con p.arty p.args -> Clause
     cclause c = patClause (var f `app` bindAny c) `(Data.Prim.Bits32.mkLT Refl)
+
+export
+toIndexDef : (fun, cif, ltp : Name) -> Decl
+toIndexDef f cif ltp =
+ let rhs := `(I (cast {to = Bits32} (~(var cif) v)) @{~(var ltp) v})
+  in def f [patClause (var f `app` var "v") rhs]
 
 export
 conIndexInjectiveDef : (fun : Name) -> TypeInfo -> Decl
@@ -101,6 +122,26 @@ ConIndexLtVis vis nms p =
 export %inline
 ConIndexLt : List Name -> ParamTypeInfo -> Res (List TopLevel)
 ConIndexLt = ConIndexLtVis Export
+
+||| Generates a conversion of data constructors to values of type `Index n`,
+||| where `n` is the number of data constructors of the given type.
+|||
+||| This includes `ConIndexLtVis`
+export
+ToIndexVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
+ToIndexVis vis nms p =
+  let fun  := toIndexName p
+      cif  := conIndexName p
+      ltp  := conIndexLtName p
+   in sequenceJoin
+        [ ConIndexLtVis vis nms p
+        , Right [TL (toIndexClaim vis fun p.info) (toIndexDef fun cif ltp)]
+        ]
+
+||| Alias for `ToIndexVis Export`
+export %inline
+ToIndex : List Name -> ParamTypeInfo -> Res (List TopLevel)
+ToIndex = ToIndexVis Export
 
 ||| Generates a proof that the `conIndexXY` function is injective.
 export
