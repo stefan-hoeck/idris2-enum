@@ -69,6 +69,13 @@ toIndexClaim vis fun p =
       tpe := piAll `(Index ~(tot)) (p.implicits ++ [arg])
    in simpleClaim vis fun tpe
 
+||| Top-level `Enum` implementation declaration
+export
+enumClaim : Visibility -> (fun : Name) -> (p : TypeInfo) -> Decl
+enumClaim vis fun p =
+  let tot := primVal (B32 $ cast $ length p.cons)
+   in implClaimVis vis fun `(Enum ~(p.applied) ~(tot))
+
 --------------------------------------------------------------------------------
 --          Definitions
 --------------------------------------------------------------------------------
@@ -102,6 +109,11 @@ valuesCompleteDef f p = def f (clauses [<] `(Here) p.cons)
     clauses sc prf (x :: xs) =
      let c := patClause (var f `app` bindAny x) prf
       in clauses (sc:<c) `(There ~(prf)) xs
+
+export
+enumDef : (f, ti, inj, comp : Name) -> Decl
+enumDef f ti inj comp =
+  def f [patClause (var f) `(MkEnum ~(var ti) ~(var inj) ~(var comp))]
 
 --------------------------------------------------------------------------------
 --          Deriving
@@ -172,3 +184,29 @@ ValuesCompleteVis vis nms p =
 export %inline
 ValuesComplete : List Name -> ParamTypeInfo -> Res (List TopLevel)
 ValuesComplete = ValuesCompleteVis Export
+
+||| Derives interfaces `Eq`, `Ord`, `Finite`, and `Enum` plus utility
+||| functions with the relevant proofs for the given type.
+|||
+||| Erased proofs are generated at `export` visibility.
+export
+EnumVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
+EnumVis vis nms p =
+  let fun := implName p "Enum"
+      ti  := toIndexName p
+      inj := toIndexInjectiveName p
+      cmp := valuesCompleteName p
+   in sequenceJoin
+        [ EqVis vis nms p
+        , OrdVis vis nms p
+        , FiniteVis vis nms p
+        , ToIndex nms p
+        , ToIndexInjective nms p
+        , ValuesComplete nms p
+        , Right [TL (enumClaim vis fun p.info) (enumDef fun ti inj cmp)]
+        ]
+
+||| Alias for `ValuesCompleteVis Export`
+export %inline
+Enum : List Name -> ParamTypeInfo -> Res (List TopLevel)
+Enum = EnumVis Public
