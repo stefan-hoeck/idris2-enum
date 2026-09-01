@@ -157,4 +157,4 @@ data LargeEnum : Type where
   L149 : LargeEnum
   L150 : LargeEnum
 
-%runElab derive "LargeEnum" [Show,Eq,Ord,Finite,ConIndexLt,ConIndexInjective,ValuesComplete]
+%runElab derive "LargeEnum" [Show,Eq,Ord,Finite,ToIndex,ConIndexInjective,ValuesComplete]
