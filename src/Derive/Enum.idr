@@ -19,8 +19,8 @@ toIndexName : Named a => a -> Name
 toIndexName v = funName v "toIndex"
 
 export
-conIndexInjectiveName : Named a => a -> Name
-conIndexInjectiveName v = funName v "conIndexInjective"
+toIndexInjectiveName : Named a => a -> Name
+toIndexInjectiveName v = funName v "toIndexInjective"
 
 export
 valuesCompleteName : Named a => a -> Name
@@ -40,9 +40,9 @@ conIndexLtClaim vis cifun fun p =
 ||| Top-level function declaration of a proof that all the `conIndexXY`
 ||| function is injective.
 export
-conIndexInjectiveClaim : Visibility -> (cifun, fun : Name) -> (p : TypeInfo) -> Decl
-conIndexInjectiveClaim vis cifun fun p =
-  let civ := var cifun
+toIndexInjectiveClaim : Visibility -> (tifun, fun : Name) -> (p : TypeInfo) -> Decl
+toIndexInjectiveClaim vis tifun fun p =
+  let civ := var tifun
       a1  := MkArg MW ExplicitArg (Just "x") p.applied
       a2  := MkArg MW ExplicitArg (Just "y") p.applied
       prf := MkArg MW ExplicitArg (Just "prf") `(~(civ) x === ~(civ) y)
@@ -87,8 +87,8 @@ toIndexDef f cif ltp =
   in def f [patClause (var f `app` var "v") rhs]
 
 export
-conIndexInjectiveDef : (fun : Name) -> TypeInfo -> Decl
-conIndexInjectiveDef f p = def f $ map cclause p.cons
+toIndexInjectiveDef : (fun : Name) -> TypeInfo -> Decl
+toIndexInjectiveDef f p = def f $ map cclause p.cons
   where
     cclause : Con p.arty p.args -> Clause
     cclause c = patClause (appAll f [bindAny c, bindAny c, `(Refl)]) `(Refl)
@@ -143,20 +143,20 @@ export %inline
 ToIndex : List Name -> ParamTypeInfo -> Res (List TopLevel)
 ToIndex = ToIndexVis Export
 
-||| Generates a proof that the `conIndexXY` function is injective.
+||| Generates a proof that the `toIndexXY` function is injective.
 export
-ConIndexInjectiveVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
-ConIndexInjectiveVis vis nms p =
-  let ci   := conIndexName p
-      fun  := conIndexInjectiveName p
+ToIndexInjectiveVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
+ToIndexInjectiveVis vis nms p =
+  let ti   := toIndexName p
+      fun  := toIndexInjectiveName p
    in Right
-        [ TL (conIndexInjectiveClaim vis ci fun p.info) (conIndexInjectiveDef fun p.info)
+        [ TL (toIndexInjectiveClaim vis ti fun p.info) (toIndexInjectiveDef fun p.info)
         ]
 
-||| Alias for `ConIndexInjectiveVis Export`
+||| Alias for `ToIndexInjectiveVis Export`
 export %inline
-ConIndexInjective : List Name -> ParamTypeInfo -> Res (List TopLevel)
-ConIndexInjective = ConIndexInjectiveVis Export
+ToIndexInjective : List Name -> ParamTypeInfo -> Res (List TopLevel)
+ToIndexInjective = ToIndexInjectiveVis Export
 
 ||| Generates a proof that the `Data.Finite.values` indeed contains every
 ||| possible value. This currently only works for enum types.
