@@ -52,6 +52,13 @@ export %inline
 Cast (Index n) Bits32 where
   cast (I v) = v
 
+export
+HDecEq (Index n) where
+  hdecEq (I x) (I y) =
+    case hdecEq x y of
+      Nothing0  => Nothing0
+      Just0 prf => Just0 $ believe_me (Builtin.Refl {x})
+
 --------------------------------------------------------------------------------
 -- Enum Interface
 --------------------------------------------------------------------------------
@@ -111,6 +118,29 @@ Enum Ordering 3 where
   valuesComplete LT = Here
   valuesComplete EQ = There Here
   valuesComplete GT = There $ There Here
+
+export
+{n : _} -> Finite (Index n) where
+  values = mapMaybe tryIndex [0..n]
+
+||| Proof that every `Index n` is in the list of values.
+export
+vcomplete : {n : _} -> (i : Index n) -> Elem i Finite.values
+vcomplete i = go values
+  where
+    go : (is : List (Index n)) -> Elem i is
+    go [] = assert_total $ idris_crash "vcomplete end of list"
+    go (x::xs) =
+      case hdecEq i x of
+        Nothing0  => There $ go xs
+        Just0 prf => rewrite prf in Here
+
+export %inline
+{n : _} -> Enum (Index n) n where
+  toIndex x = x
+  toIndexInjective (I x) (I x) Refl = Refl
+  valuesComplete x = vcomplete x
+
 
 --------------------------------------------------------------------------------
 -- Utilities

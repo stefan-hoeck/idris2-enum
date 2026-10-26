@@ -2,6 +2,7 @@ module Main
 
 import Derive.Enum
 import Large
+import IndexImpl
 
 %default total
 %language ElabReflection
@@ -24,4 +25,6 @@ toIndex x = I (cast $ conIndexMyEnum x) @{conIndexLtMyEnum x}
 -- This is just a dummy. What we actually want is that this file
 -- typechecks when "running" the test.
 main : IO ()
-main = putStrLn "All is well"
+main = Prelude.do
+  traverse_ IndexImpl.check [0..500]
+  putStrLn "All is well"
