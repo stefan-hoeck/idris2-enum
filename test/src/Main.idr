@@ -30,8 +30,14 @@ data MyTEnum : Type -> Type where
 
 %runElab deriveIndexed "MyTEnum" [TEnum]
 
--- This is just a dummy. What we actually want is that this file
--- typechecks when "running" the test.
+data NatEnum : Bool -> Type where
+  NE1 : NatEnum True
+  NE2 : NatEnum False
+  NE3 : NatEnum True
+  NE4 : NatEnum False
+
+%runElab deriveIndexed "NatEnum" [TEnum]
+
 main : IO ()
 main = Prelude.do
   traverse_ IndexImpl.check [0..500]
