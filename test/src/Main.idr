@@ -22,6 +22,14 @@ data MyEnum : Type where
 toIndex : MyEnum -> Index 8
 toIndex x = I (cast $ conIndexMyEnum x) @{conIndexLtMyEnum x}
 
+data MyTEnum : Type -> Type where
+  MT1 : MyTEnum Bool
+  MT2 : MyTEnum String
+  MT3 : MyTEnum (Maybe Nat)
+  MT4 : MyTEnum ()
+
+%runElab deriveIndexed "MyTEnum" [TEnum]
+
 -- This is just a dummy. What we actually want is that this file
 -- typechecks when "running" the test.
 main : IO ()

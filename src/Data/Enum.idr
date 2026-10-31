@@ -160,3 +160,33 @@ inListImpliesElem v prf {is = []}    = absurd prf
 inListImpliesElem v prf {is = x::xs} with (hdecEq v x)
   _ | Nothing0  = There $ inListImpliesElem v prf {is = xs}
   _ | Just0 p   = rewrite p in Here
+
+--------------------------------------------------------------------------------
+-- TEnum Interface
+--------------------------------------------------------------------------------
+
+||| Verified tagged enumerations.
+|||
+||| Provides a function for converting a value of the given type to an
+||| `Index n` of the given size plus a proof that this function is injective.
+|||
+||| With this we can use a value of type `t a` as an index into a
+||| dependent array.
+public export
+interface TEnum (0 t : Type -> Type) (0 n : Bits32) | t where
+  constructor MkTEnum
+  toIndexT : t a -> Index n
+
+  0 toIndexInjectiveT : (x : t a) -> (y : t b) -> toIndexT x === toIndexT y -> x ~=~ y
+
+export %inline
+tenumToFin : TEnum t n => t a -> Fin (cast n)
+tenumToFin = toFin . toIndexT
+
+export %inline
+tenumToBits32 : TEnum t n => t a -> Bits32
+tenumToBits32 = cast . toIndexT
+
+export %inline
+tenumToInteger : TEnum t n => t a -> Integer
+tenumToInteger = cast . toIndexT
