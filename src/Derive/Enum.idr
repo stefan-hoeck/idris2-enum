@@ -49,6 +49,21 @@ toIndexInjectiveClaim vis tifun fun p =
       tpe := piAll `(x === y) (p.implicits ++ [a1,a2,prf])
    in claim M0 vis [] fun tpe
 
+||| Top-level function declaration of a proof that all the `conIndexXY`
+||| function is injective.
+export
+toIndexInjectiveClaimT : Visibility -> (tifun, fun : Name) -> (p : TypeInfo) -> Decl
+toIndexInjectiveClaimT vis tifun fun p =
+  let civ := var tifun
+      vp  := var p.name
+      t1  := MkArg M0 ImplicitArg (Just "t1") `(Type)
+      t2  := MkArg M0 ImplicitArg (Just "t2") `(Type)
+      a1  := MkArg MW ExplicitArg (Just "x") `(~(vp) t1)
+      a2  := MkArg MW ExplicitArg (Just "y") `(~(vp) t2)
+      prf := MkArg MW ExplicitArg (Just "prf") `(~(civ) x = ~(civ) y)
+      tpe := piAll `(x = y) [t1,t2,a1,a2,prf]
+   in claim M0 vis [] fun tpe
+
 ||| Top-level function declaration of a proof that every value is
 ||| indeed included in `Data.Finite.values`.
 export
@@ -75,6 +90,13 @@ enumClaim : Visibility -> (fun : Name) -> (p : TypeInfo) -> Decl
 enumClaim vis fun p =
   let tot := primVal (B32 $ cast $ length p.cons)
    in implClaimVis vis fun `(Enum ~(p.applied) ~(tot))
+
+||| Top-level `Enum` implementation declaration
+export
+tenumClaim : Visibility -> (fun : Name) -> (p : TypeInfo) -> Decl
+tenumClaim vis fun p =
+  let tot := primVal (B32 $ cast $ length p.cons)
+   in implClaimVis vis fun `(TEnum ~(var p.name) ~(tot))
 
 --------------------------------------------------------------------------------
 --          Definitions
@@ -114,6 +136,11 @@ export
 enumDef : (f, ti, inj, comp : Name) -> Decl
 enumDef f ti inj comp =
   def f [patClause (var f) `(MkEnum ~(var ti) ~(var inj) ~(var comp))]
+
+export
+tenumDef : (f, ti, inj : Name) -> Decl
+tenumDef f ti inj =
+  def f [patClause (var f) `(MkTEnum ~(var ti) ~(var inj))]
 
 --------------------------------------------------------------------------------
 --          Deriving
@@ -206,7 +233,44 @@ EnumVis vis nms p =
         , Right [TL (enumClaim vis fun p.info) (enumDef fun ti inj cmp)]
         ]
 
-||| Alias for `ValuesCompleteVis Export`
+||| Alias for `EnumVis Public`
 export %inline
 Enum : List Name -> ParamTypeInfo -> Res (List TopLevel)
 Enum = EnumVis Public
+
+||| Generates a proof that the `toIndexXY` function is injective.
+export
+ToIndexInjectiveTVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
+ToIndexInjectiveTVis vis nms p =
+  let ti   := toIndexName p
+      fun  := toIndexInjectiveName p
+   in Right
+        [ TL (toIndexInjectiveClaimT vis ti fun p.info) (toIndexInjectiveDef fun p.info)
+        ]
+
+||| Alias for `ToIndexInjectiveTVis Export`
+export %inline
+ToIndexInjectiveT : List Name -> ParamTypeInfo -> Res (List TopLevel)
+ToIndexInjectiveT = ToIndexInjectiveTVis Export
+
+||| Derives interfaces `TEnum` plus utility
+||| functions with the relevant proofs for the given `Type -> Type`.
+|||
+||| Erased proofs are generated at `export` visibility.
+export
+TEnumVis : Visibility -> List Name -> ParamTypeInfo -> Res (List TopLevel)
+TEnumVis vis nms p =
+  let fun := implName p "TEnum"
+      ti  := toIndexName p
+      inj := toIndexInjectiveName p
+   in sequenceJoin
+        [ ConIndex nms p
+        , ToIndex nms p
+        , ToIndexInjectiveT nms p
+        , Right [TL (tenumClaim vis fun p.info) (tenumDef fun ti inj)]
+        ]
+
+||| Alias for `TEnumVis Public`
+export %inline
+TEnum : List Name -> ParamTypeInfo -> Res (List TopLevel)
+TEnum = TEnumVis Public
