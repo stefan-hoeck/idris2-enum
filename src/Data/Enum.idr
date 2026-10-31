@@ -173,7 +173,7 @@ inListImpliesElem v prf {is = x::xs} with (hdecEq v x)
 ||| With this we can use a value of type `t a` as an index into a
 ||| dependent array.
 public export
-interface TEnum (0 t : Type -> Type) (0 n : Bits32) | t where
+interface TEnum (0 t : k -> Type) (0 n : Bits32) | t where
   constructor MkTEnum
   toIndexT : t a -> Index n
 

@@ -49,6 +49,11 @@ toIndexInjectiveClaim vis tifun fun p =
       tpe := piAll `(x === y) (p.implicits ++ [a1,a2,prf])
    in claim M0 vis [] fun tpe
 
+argType : Vect n Arg -> TTImp
+argType []        = `(_)
+argType [a]       = a.type
+argType (_ :: xs) = argType xs
+
 ||| Top-level function declaration of a proof that all the `conIndexXY`
 ||| function is injective.
 export
@@ -56,8 +61,9 @@ toIndexInjectiveClaimT : Visibility -> (tifun, fun : Name) -> (p : TypeInfo) -> 
 toIndexInjectiveClaimT vis tifun fun p =
   let civ := var tifun
       vp  := var p.name
-      t1  := MkArg M0 ImplicitArg (Just "t1") `(Type)
-      t2  := MkArg M0 ImplicitArg (Just "t2") `(Type)
+      at  := argType p.args
+      t1  := MkArg M0 ImplicitArg (Just "t1") at
+      t2  := MkArg M0 ImplicitArg (Just "t2") at
       a1  := MkArg MW ExplicitArg (Just "x") `(~(vp) t1)
       a2  := MkArg MW ExplicitArg (Just "y") `(~(vp) t2)
       prf := MkArg MW ExplicitArg (Just "prf") `(~(civ) x = ~(civ) y)
@@ -117,10 +123,15 @@ toIndexDef f cif ltp =
 
 export
 toIndexInjectiveDef : (fun : Name) -> TypeInfo -> Decl
-toIndexInjectiveDef f p = def f $ map cclause p.cons
+toIndexInjectiveDef f p = def f $ map cclause [| MkPair p.cons p.cons |]
   where
-    cclause : Con p.arty p.args -> Clause
-    cclause c = patClause (appAll f [bindAny c, bindAny c, `(Refl)]) `(Refl)
+    cclause : (Con x y,Con x y) -> Clause
+    cclause (c1,c2) =
+     let t1 := var c1.name
+         t2 := var c2.name
+      in case c1.name == c2.name of
+           True => patClause (appAll f [t1,t2,`(Refl)]) `(Refl)
+           False => impossibleClause (appAll f [t1,t2,`(Refl)])
 
 export
 valuesCompleteDef : (fun : Name) -> TypeInfo -> Decl
